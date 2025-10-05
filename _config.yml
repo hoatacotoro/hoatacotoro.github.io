@@ -10,3 +10,10 @@ search_enabled: true
 
 color_scheme: dark
 
+plugins:
+  - jekyll-seo-tag
+
+# SEO settings
+title: "hoatadocs"
+description: "hoata cotoro documentation website"
+url: "https://docs.hoatacotoro.cc"
