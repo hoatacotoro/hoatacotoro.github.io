@@ -1,19 +1,16 @@
 title: hoatadocs
-description: documentation web
+description: hoatacotoro documentation for some of my projects
 theme: just-the-docs
 
-url: https://just-the-docs.github.io
+url: "https://docs.hoatacotoro.cc"
+baseurl: ""
 
-favicon_ico: "/assets/images/something.ico"
+favicon_ico: "favicon.ico"
 
 search_enabled: true
-
-color_scheme: dark
+color_scheme: hoata
 
 plugins:
   - jekyll-seo-tag
 
-# SEO settings
-title: "hoatadocs"
-description: "hoata cotoro documentation website"
-url: "https://docs.hoatacotoro.cc"
+permalink: pretty
