@@ -1,0 +1,50 @@
+.game-container {
+    display: flex;
+    gap: 20px;
+}
+
+#game-board {
+    width: 300px;
+    height: 600px;
+    background-color: #000000;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    border: 1px solid #424049;
+}
+
+.cell {
+    border: 1px solid #424049;
+}
+
+.filled {
+    border: 1px solid #424049;
+}
+
+.info {
+    color: #ffffff;
+}
+
+.controls {
+    margin-top: 20px;
+}
+
+.game-button-newgame {
+    padding: 8px 20px; 
+    margin: 4px; 
+    background-color: #3d9740; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer;
+}
+
+.game-button-restart {
+    padding: 8px 20px; 
+    margin: 4px; 
+    background-color: rgb(175, 76, 76); 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer;
+}
