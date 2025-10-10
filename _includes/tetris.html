@@ -1,12 +1,33 @@
 <link rel="stylesheet" href="{{ '/assets/css/tetris.css' | relative_url }}">
 <div class="game-container">
+    <div id="game-over" class="game-over-hidden">
+        <div class="game-over-text">game over</div>
+    </div>
     <div id="game-board"></div>
     <div class="info">
+        <div class="next-piece-container">
+            <p>next figure:</p>
+            <div id="next-piece-board"></div>
+        </div>
         <p>score: <span id="score">0</span></p>
         <p>level: <span id="level">1</span></p>
         <div class="controls">
             <button class="game-button-newgame" onclick="pauseGame()">pause</button>
             <button class="game-button-restart" onclick="restartGame()">restart</button>
+        </div>
+        
+        <div class="mobile-controls">
+            <div class="mobile-row">
+                <button class="mobile-btn" id="rotate-btn">↻</button>
+            </div>
+            <div class="mobile-row">
+                <button class="mobile-btn" id="left-btn">←</button>
+                <button class="mobile-btn" id="down-btn">↓</button>
+                <button class="mobile-btn" id="right-btn">→</button>
+            </div>
+            <div class="mobile-row">
+                <button class="mobile-btn hard-drop" id="hard-drop-btn">DROP</button>
+            </div>
         </div>
     </div>
 </div>

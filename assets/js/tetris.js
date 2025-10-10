@@ -15,28 +15,40 @@ const SHAPES = [
 
 const COLORS = [
     '#27262b',
-    '#00FFFF', // I
-    '#FFFF00', // O
-    '#800080', // T
-    '#FFA500', // L
-    '#0000FF', // J
-    '#00FF00', // S
-    '#FF0000'  // Z
+    '#3cbe8e', // I
+    '#c4ac43', // O
+    '#bd66b4', // T
+    '#c67543', // L
+    '#5e4cb0', // J
+    '#9aca48', // S
+    '#d4535a'  // Z
 ];
 
 let board = [];
 let currentPiece = null;
 let currentPosition = null;
+let nextPiece = null;
 let score = 0;
 let level = 1;
 let gameInterval = null;
 let isPaused = false;
+let isGameOver = false; 
+
+// Mobile touch variables
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
 
 function initGame() {
     createBoard();
+    createNextPieceBoard();
     generateNewPiece();
     drawBoard();
+    drawNextPiece();
+    hideGameOver();
     startGameLoop();
+    setupMobileControls(); // Initialize mobile controls
 }
 
 function createBoard() {
@@ -54,16 +66,63 @@ function createBoard() {
     }
 }
 
+function createNextPieceBoard() {
+    const nextBoard = document.getElementById('next-piece-board');
+    nextBoard.innerHTML = '';
+    
+    for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'next-cell';
+            cell.id = `next-cell-${y}-${x}`;
+            nextBoard.appendChild(cell);
+        }
+    }
+}
+
 function generateNewPiece() {
-    const shapeIndex = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
-    currentPiece = {
-        shape: SHAPES[shapeIndex],
-        color: COLORS[shapeIndex]
-    };
+    if (nextPiece) {
+        currentPiece = nextPiece;
+    } else {
+        const shapeIndex = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
+        currentPiece = {
+            shape: SHAPES[shapeIndex],
+            color: COLORS[shapeIndex]
+        };
+    }
+    
     currentPosition = {
         x: Math.floor(BOARD_WIDTH / 2) - Math.floor(currentPiece.shape[0].length / 2),
         y: 0
     };
+    
+    const nextShapeIndex = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
+    nextPiece = {
+        shape: SHAPES[nextShapeIndex],
+        color: COLORS[nextShapeIndex]
+    };
+}
+
+function drawNextPiece() {
+    for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+            const cell = document.getElementById(`next-cell-${y}-${x}`);
+            cell.style.backgroundColor = '#27262b';
+        }
+    }
+    
+    const nextShape = nextPiece.shape;
+    const offsetX = Math.floor((4 - nextShape[0].length) / 2);
+    const offsetY = Math.floor((4 - nextShape.length) / 2);
+    
+    for (let y = 0; y < nextShape.length; y++) {
+        for (let x = 0; x < nextShape[y].length; x++) {
+            if (nextShape[y][x]) {
+                const cell = document.getElementById(`next-cell-${offsetY + y}-${offsetX + x}`);
+                cell.style.backgroundColor = nextPiece.color;
+            }
+        }
+    }
 }
 
 function drawBoard() {
@@ -75,7 +134,7 @@ function drawBoard() {
         }
     }
 
-    if (currentPiece) {
+    if (currentPiece && !isGameOver) {
         for (let y = 0; y < currentPiece.shape.length; y++) {
             for (let x = 0; x < currentPiece.shape[y].length; x++) {
                 if (currentPiece.shape[y][x]) {
@@ -126,6 +185,7 @@ function lockPiece() {
     }
     clearLines();
     generateNewPiece();
+    drawNextPiece();
     
     if (checkCollision(currentPiece.shape, currentPosition)) {
         gameOver();
@@ -152,7 +212,7 @@ function clearLines() {
 }
 
 function moveDown() {
-    if (isPaused) return;
+    if (isPaused || isGameOver) return;
 
     currentPosition.y++;
     if (checkCollision(currentPiece.shape, currentPosition)) {
@@ -163,7 +223,7 @@ function moveDown() {
 }
 
 function move(direction) {
-    if (isPaused) return;
+    if (isPaused || isGameOver) return;
 
     currentPosition.x += direction;
     if (checkCollision(currentPiece.shape, currentPosition)) {
@@ -173,7 +233,7 @@ function move(direction) {
 }
 
 function rotate() {
-    if (isPaused) return;
+    if (isPaused || isGameOver) return;
 
     const rotated = currentPiece.shape[0].map((_, i) =>
         currentPiece.shape.map(row => row[i]).reverse()
@@ -182,6 +242,16 @@ function rotate() {
     if (!checkCollision(rotated, currentPosition)) {
         currentPiece.shape = rotated;
     }
+    drawBoard();
+}
+
+function hardDrop() {
+    if (isPaused || isGameOver) return;
+
+    while (!checkCollision(currentPiece.shape, {x: currentPosition.x, y: currentPosition.y + 1})) {
+        currentPosition.y++;
+    }
+    lockPiece();
     drawBoard();
 }
 
@@ -197,6 +267,7 @@ function updateUI() {
 }
 
 function pauseGame() {
+    if (isGameOver) return;
     isPaused = !isPaused;
     if (isPaused) {
         clearInterval(gameInterval);
@@ -210,15 +281,139 @@ function restartGame() {
     score = 0;
     level = 1;
     isPaused = false;
+    isGameOver = false;
+    nextPiece = null;
     initGame();
     updateUI();
 }
 
+function showGameOver() {
+    const gameOverElement = document.getElementById('game-over');
+    gameOverElement.className = 'game-over-visible';
+}
+
+function hideGameOver() {
+    const gameOverElement = document.getElementById('game-over');
+    gameOverElement.className = 'game-over-hidden';
+}
+
 function gameOver() {
     clearInterval(gameInterval);
-    alert(`game over your score is: ${score}`);
-    restartGame();
+    isGameOver = true;
+    showGameOver();
 }
+
+// Mobile Controls Functions
+function isMobileDevice() {
+    return (('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (navigator.msMaxTouchPoints > 0));
+}
+
+function handleTouchStart(event) {
+    if (!isGameOver && !isPaused) {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+    }
+}
+
+function handleTouchMove(event) {
+    event.preventDefault(); // Prevent scrolling
+}
+
+function handleTouchEnd(event) {
+    if (isGameOver || isPaused) return;
+    
+    touchEndX = event.changedTouches[0].clientX;
+    touchEndY = event.changedTouches[0].clientY;
+    
+    handleSwipe();
+}
+
+function handleSwipe() {
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+    const minSwipeDistance = 30;
+    
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+        if (diffX > 0) {
+            move(1); // Swipe right
+        } else {
+            move(-1); // Swipe left
+        }
+    }
+    else if (Math.abs(diffY) > minSwipeDistance) {
+        if (diffY > 0) {
+            moveDown(); // Swipe down
+        } else {
+            rotate(); // Swipe up
+        }
+    }
+}
+
+function setupMobileControls() {
+    if (isMobileDevice()) {
+        // Button controls
+        document.getElementById('left-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            move(-1);
+        });
+        
+        document.getElementById('right-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            move(1);
+        });
+        
+        document.getElementById('down-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveDown();
+        });
+        
+        document.getElementById('rotate-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            rotate();
+        });
+        
+        document.getElementById('hard-drop-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            hardDrop();
+        });
+        
+        // Swipe controls on game board
+        const gameBoard = document.getElementById('game-board');
+        gameBoard.addEventListener('touchstart', handleTouchStart, { passive: false });
+        gameBoard.addEventListener('touchmove', handleTouchMove, { passive: false });
+        gameBoard.addEventListener('touchend', handleTouchEnd, { passive: false });
+        
+        // Prevent context menu on long press
+        gameBoard.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    }
+}
+
+// Prevent zooming and scrolling
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+
+document.addEventListener('gesturechange', function (e) {
+    e.preventDefault();
+});
+
+document.addEventListener('gestureend', function (e) {
+    e.preventDefault();
+});
+
+// Prevent double-tap zoom
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+    lastTouchEnd = now;
+}, false);
 
 window.addEventListener("keydown", function(event) {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
@@ -227,6 +422,8 @@ window.addEventListener("keydown", function(event) {
 });
 
 document.addEventListener('keydown', (e) => {
+    if (isGameOver) return;
+    
     if (e.key === ' ') {
         e.preventDefault();
         pauseGame();
@@ -234,7 +431,7 @@ document.addEventListener('keydown', (e) => {
         switch(e.key) {
             case 'ArrowLeft': move(-1); break;
             case 'ArrowRight': move(1); break;
-            case 'ArrowDown': moveDown(); break;
+            case 'ArrowDown': hardDrop(); break;
             case 'ArrowUp': rotate(); break;
         }
     }
